@@ -1,5 +1,21 @@
 # name of the object detection model
-model_name: "ssd_mobilenet_v1_coco_2017_11_17"
+##MODEL 1
+model_name: "model_coco_2018"
+# ##MODEL 2 #VERY SLOW
+# model_name: "model_ava_2018"
+# ##MODEL 3 #NOT EVEN WORKING
+# model_name: "model_inaturalist_2018"
+# ##MODEL 4 #VERY SLOW
+# model_name: "model_kitti_2018"
+# ##MODEL 5 #NOT EVEN WORKING
+# model_name: "model_open_2018"
+# ##MODEL 6 #DETECTING MORE STUFF BUT SAME VARIETY AS "model_coco-2018" very fast!!
+# model_name: "model_ssd_mobilenet_v1_0.75_depth_coco_26ms"
+# ##MODEL 7 #SLOWISH BUT DETECTING MANY BOTTLES AND CUPS
+# model_name: "model_faster_rcnn_resnet101_coco_106ms"
+# ##MODEL 8 #SLOW WITH FEWER DETECTIONS
+# model_name: "model_ssd_mobilenet_v1_fpn_coco_56ms"
+
 
 # number of classes in dataset
 num_of_classes: 90
@@ -8,10 +24,10 @@ num_of_classes: 90
 label_file: "mscoco_label_map.pbtxt"
 
 # Set your RGB image topic here, default is for openni2
-camera_namespace: "/camera/rgb/image_rect_color"
+camera_namespace: "/xtion/rgb/image_raw"
 
 # Set your depth image topic here, default is for openni2
-depth_namespace: "/camera/depth_registered/hw_registered/image_rect"
+depth_namespace: "/xtion/depth/image"
 
 # Video name, if you provide a video name with path algorithm will run on it, otherwise write "no" for getting from camera
 video_name: "no"

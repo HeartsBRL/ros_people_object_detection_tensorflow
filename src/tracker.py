@@ -141,19 +141,20 @@ class PeopleObjectTrackerNode(object):
 
             for i, j in zip(row_ind, col_ind):
                 if C[i, j] < self.cost_threshold and j != 0:
-                    print("{} -> {} with cost {}".\
-                        format(tracks[i, 4], detections_copy[j-1].label,\
-                        C[i,j]))
+                    #UNCOMMENT ALL COMMENTED LINES TO SEE THE DETECTION ON THE TERMINAL
+                    # print("{} -> {} with cost {}".\
+                    #     format(tracks[i, 4], detections_copy[j-1].label,\
+                    #     C[i,j]))
 
                     detections_copy[j-1].id = int(tracks[i, 4])
 
                     detections.detections.append(detections_copy[j-1])
 
-            print("------------")
+            # print("------------")
 
 
-        else:
-            print "No tracked objects!"
+        #else:
+            # print "No tracked objects!"
 
         self.pub_trackers.publish(detections)
 

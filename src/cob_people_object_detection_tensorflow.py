@@ -21,6 +21,8 @@ from cob_people_object_detection_tensorflow.detector import Detector
 
 from cob_people_object_detection_tensorflow import utils
 
+from std_msgs.msg import Bool
+
 class PeopleObjectDetectionNode(object):
     """docstring for PeopleObjectDetectionNode."""
     def __init__(self):
@@ -30,7 +32,7 @@ class PeopleObjectDetectionNode(object):
         rospy.init_node('people_object_detection', anonymous=False)
 
         # Get the parameters
-        (model_name, num_of_classes, label_file, camera_namespace, video_name) \
+        (model_name, num_of_classes, label_file, self.camera_namespace, video_name) \
         = self.get_parameters()
 
         # Create Detector
@@ -46,16 +48,24 @@ class PeopleObjectDetectionNode(object):
         self.pub_detections_image = rospy.Publisher(\
             '/object_detection/detections_image', Image, queue_size=1)
 
-        if video_name == "no":
-            # Subscribe to the face positions
-            self.sub_rgb = rospy.Subscriber(camera_namespace,\
-                Image, self.rgb_callback, queue_size=1, buff_size=2**24)
-        else:
-            self.read_from_video(video_name)
-
+        self.toggle_sub = rospy.Subscriber('cob_detector_toggle', Bool, self.sub_toggle)
 
         # spin
         rospy.spin()
+
+    def sub_toggle(self,data):
+        if data.data == True:
+            #if video_name == "no":
+                # Subscribe to the face positions
+                rospy.loginfo('Vision is now on')
+                self.sub_rgb = rospy.Subscriber(self.camera_namespace,\
+                    Image, self.rgb_callback, queue_size=1, buff_size=2**24)
+            #else:
+            #    self.read_from_video(video_name)
+        else:
+            rospy.loginfo('vision is now off')
+            self.sub_rgb.unregister()
+            self.sub_rgb = 'Null'
 
     def read_from_video(self, video_name):
         """

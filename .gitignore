@@ -4,6 +4,7 @@
 build/
 bin/
 lib/
+src/object_detection/model_*
 
 # generated docs
 *.dox

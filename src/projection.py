@@ -14,6 +14,8 @@ import rospy
 
 import message_filters
 
+import math
+
 import numpy as np
 
 from cv_bridge import CvBridge
@@ -41,7 +43,7 @@ class ProjectionNode(object):
 
         self._bridge = CvBridge()
 
-        (depth_topic, face_topic, output_topic, f, cx, cy) = \
+        (depth_topic, face_topic, output_topic, f, cx, cy, RF) = \
             self.get_parameters()
 
          # Subscribe to the face positions
@@ -58,15 +60,15 @@ class ProjectionNode(object):
         # Create the message filter
         ts = message_filters.ApproximateTimeSynchronizer(\
             [sub_obj, sub_depth], \
-            2, \
-            0.9)
+            4, \
+            1)
 
         ts.registerCallback(self.detection_callback)
 
         self.f = f
         self.cx = cx
         self.cy = cy
-
+        self.rf = RF
         # spin
         rospy.spin()
 
@@ -98,23 +100,36 @@ class ProjectionNode(object):
 
                 x =  detection.mask.roi.x
                 y = detection.mask.roi.y
-                width =  detection.mask.roi.width
-                height = detection.mask.roi.height
+# DANIEL HEARTS TEAM MODIFICATION (Reduce width and height of the bounding box to avoid background depth values from influencing the mean)
+                #RF = 0.8
+                width =  int(round(detection.mask.roi.width*self.rf))
+                height = int(round(detection.mask.roi.height*self.rf))
 
-                cv_depth_bounding_box = cv_depth[y:y+height,x:x+width]
+                cv_depth = cv_depth[y:y+height,x:x+width]
+
+                # depth_mean = np.nanmedian(cv_depth[np.nonzero(cv_depth)])
 
                 try:
 
-                    depth_mean = np.nanmedian(\
-                       cv_depth_bounding_box[np.nonzero(cv_depth_bounding_box)])
+                    depth_mean = np.nanmedian(cv_depth[np.nonzero(cv_depth)])
 
-                    real_x = (x + width/2-self.cx)*(depth_mean*0.001)/self.f
+# DANIEL HEARTS TEAM MODIFICATION (Remove the 0.001 factor as it apparently publishes coordiantes in kilometers) Without 0.001 is meters
 
-                    real_y = (y + height/2-self.cy)*(depth_mean*0.001)/self.f
+                    real_x = (x + width/2-self.cx)*(depth_mean)/self.f#*0.001)/self.f
 
-                    msg.detections[i].pose.pose.position.x = real_x
-                    msg.detections[i].pose.pose.position.y = real_y
-                    msg.detections[i].pose.pose.position.z = depth_mean*0.001
+                    real_y = (y + height/2-self.cy)*(depth_mean)/self.f#*0.001)/self.f
+
+                    if math.isnan(real_x) or math.isnan(real_y) or math.isnan(depth_mean):
+                        msg.detections[i].pose.pose.position.x = 0
+                        msg.detections[i].pose.pose.position.y = 0
+                        msg.detections[i].pose.pose.position.z = 100#*0.001
+                        print "real_x: " + str(math.isnan(real_x))
+                        print "real_y: " + str(math.isnan(real_y))
+                        print "depth-mean: " + str(math.isnan(depth_mean))
+                    else:
+                        msg.detections[i].pose.pose.position.x = real_x
+                        msg.detections[i].pose.pose.position.y = real_y
+                        msg.detections[i].pose.pose.position.z = depth_mean#*0.001
 
                 except Exception as e:
                     print e
@@ -141,8 +156,9 @@ class ProjectionNode(object):
         f = rospy.get_param('~focal_length')
         cx = rospy.get_param('~cx')
         cy = rospy.get_param('~cy')
+        RF = rospy.get_param('~RF')
 
-        return (depth_topic, face_topic, output_topic, f, cx, cy)
+        return (depth_topic, face_topic, output_topic, f, cx, cy, RF)
 
 
 def main():
